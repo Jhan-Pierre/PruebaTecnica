@@ -5,7 +5,7 @@ namespace PruebaTecnica.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UbicacionController : ControllerBase // Cambiado a ControllerBase
+    public class UbicacionController : ControllerBase
     {
         private readonly IUbicacionService _ubicacionService;
 

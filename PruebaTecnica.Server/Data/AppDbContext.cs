@@ -21,8 +21,6 @@ namespace PruebaTecnica.Server.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // Le decimos a EF que TrabajadorDto no tiene una tabla física, es solo para resultados de consulta
             modelBuilder.Entity<TrabajadorDto>().HasNoKey();
         }
     }

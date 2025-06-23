@@ -41,8 +41,15 @@ namespace PruebaTecnica.Server.Controllers
                 return BadRequest(ModelState);
             }
 
-            var nuevoTrabajador = await _service.CreateTrabajadorAsync(trabajador);
-            return CreatedAtAction(nameof(GetTrabajador), new { id = nuevoTrabajador.Id }, nuevoTrabajador);
+            try
+            {
+                var nuevoTrabajador = await _service.CreateTrabajadorAsync(trabajador);
+                return CreatedAtAction(nameof(GetTrabajador), new { id = nuevoTrabajador.Id }, nuevoTrabajador);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
@@ -60,7 +67,7 @@ namespace PruebaTecnica.Server.Controllers
             }
             catch (ArgumentException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = ex.Message });
             }
         }
 
