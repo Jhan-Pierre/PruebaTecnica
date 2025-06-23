@@ -65,9 +65,19 @@ cd PruebaTecnica
 
 La forma más sencilla es abrir el archivo de solución (`.sln`) en Visual Studio 2022 y presionar `F5`.
 
+
 Visual Studio se encargará de:
 1.  Construir e iniciar el backend de ASP.NET Core.
 2.  Construir e iniciar el servidor de desarrollo de Vite para el frontend.
 3.  Abrir el navegador en la URL correcta.
 
+> 🔧 **Importante:** Antes de ejecutar la solución, asegúrate de que el proyecto `PruebaTecnica.Server` esté configurado como **proyecto de inicio** en Visual Studio.
+
+Para hacerlo:
+1. En el Explorador de Soluciones de Visual Studio, haz clic derecho sobre `PruebaTecnica.Server`.
+2. Selecciona la opción **"Establecer como proyecto de inicio"**.
+
 La aplicación estará lista para usarse.
+
+
+
