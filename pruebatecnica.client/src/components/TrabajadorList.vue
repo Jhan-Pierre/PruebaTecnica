@@ -62,7 +62,7 @@
     error.value = null;
     try {
       let url = '/api/trabajadores';
-      // Si hay un filtro seleccionado (no es una cadena vacía), lo añadimos a la URL
+      // Si hay un filtro seleccionado, lo añadimos a la URL
       if (filtroSexo.value) {
         url += `?sexo=${filtroSexo.value}`;
       }
@@ -114,7 +114,6 @@
       </div>
       <div class="card-body">
 
-        <!-- SECCIÓN DE FILTROS AÑADIDA -->
         <div class="row mb-4">
           <div class="col-md-4">
             <label for="filtroSexo" class="form-label fw-bold">Filtrar por Sexo</label>
@@ -125,7 +124,6 @@
             </select>
           </div>
         </div>
-        <!-- FIN DE LA SECCIÓN DE FILTROS -->
 
         <div v-if="isLoading" class="d-flex justify-content-center align-items-center my-5">
           <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;"></div>

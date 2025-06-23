@@ -2,7 +2,6 @@
   import { ref, onMounted, defineProps, defineEmits } from 'vue';
   import { Modal } from 'bootstrap';
 
-  // --- Props para personalizar el modal ---
   const props = defineProps({
     title: { type: String, default: 'Confirmar Acción' },
     message: { type: String, default: '¿Está seguro de que desea realizar esta acción?' },
@@ -11,7 +10,6 @@
     confirmButtonClass: { type: String, default: 'btn-danger' }
   });
 
-  // --- Emits para comunicarse con el padre ---
   const emit = defineEmits(['confirm', 'close']);
 
   const modalElement = ref<HTMLElement | null>(null);
@@ -53,7 +51,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="handleClose">{{ cancelButtonText }}</button>
-          <button type="button" class="btn" :class="confirmButtonClass" @click="handleConfirm">{{ confirmButtonText }}</button>
+          <button type="button" :class="['btn', confirmButtonClass]" @click="handleConfirm"> {{ confirmButtonText }} </button>
         </div>
       </div>
     </div>
