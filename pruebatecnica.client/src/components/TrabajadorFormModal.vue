@@ -1,8 +1,8 @@
 <script setup lang="ts">
-  import { ref, onMounted, computed, defineProps, defineEmits } from 'vue';
+  import { ref, watch, onMounted, computed, defineProps, defineEmits } from 'vue';
   import { Modal as BootstrapModal } from 'bootstrap';
-  import { useUbicacion } from '@/composables/useUbicacion';
 
+  // --- Definición de Props y Emits ---
   const props = defineProps({
     trabajadorId: {
       type: Number,
@@ -11,12 +11,14 @@
   });
   const emit = defineEmits(['close', 'saved']);
 
+  // --- Estado del Componente ---
   const modalElement = ref<HTMLElement | null>(null);
   let modalInstance: BootstrapModal | null = null;
   const isEditMode = computed(() => props.trabajadorId !== null);
-  const isLoading = ref(true);
-  const isSaving = ref(false);
+  const isLoading = ref(true); // Carga interna del modal, empieza en true para mostrar spinner
+  const isSaving = ref(false); // Estado para el botón de guardar
   const errorApi = ref<string | null>(null);
+  // Añade una nueva ref para los errores de validación por campo
   const validationErrors = ref<Record<string, string[]>>({});
 
   const form = ref({
@@ -30,59 +32,128 @@
     idDistrito: null as number | null,
   });
 
-  const {
-    departamentos,
-    provincias,
-    distritos,
-    isProvinciasLoading,
-    isDistritosLoading,
-    fetchDepartamentos,
-    fetchProvincias,
-    fetchDistritos
-  } = useUbicacion(form);
+  const departamentos = ref<{ id: number, nombreDepartamento: string }[]>([]);
+  const provincias = ref<{ id: number, nombreProvincia: string }[]>([]);
+  const distritos = ref<{ id: number, nombreDistrito: string }[]>([]);
 
+  const isProvinciasLoading = ref(false);
+  const isDistritosLoading = ref(false);
+
+  // --- Lógica de Catálogos ---
+  const fetchDepartamentos = async () => {
+    const response = await fetch('/api/ubicacion/departamentos');
+    if (response.ok) departamentos.value = await response.json();
+  };
+  const fetchProvincias = async (idDepartamento: number | null) => {
+    provincias.value = [];
+    distritos.value = [];
+    isProvinciasLoading.value = true;
+    if (idDepartamento) {
+      const response = await fetch(`/api/ubicacion/provincias/${idDepartamento}`);
+      if (response.ok) provincias.value = await response.json();
+    }
+    isProvinciasLoading.value = false;
+  };
+  const fetchDistritos = async (idProvincia: number | null) => {
+    distritos.value = [];
+    isDistritosLoading.value = true;
+    if (idProvincia) {
+      const response = await fetch(`/api/ubicacion/distritos/${idProvincia}`);
+      if (response.ok) distritos.value = await response.json();
+    }
+    isDistritosLoading.value = false;
+  };
+
+  const isProvinciaDisabled = computed((): boolean => {
+    return Boolean(isProvinciasLoading.value || !form.value.idDepartamento);
+  });
+
+  const isDistritoDisabled = computed((): boolean => {
+    return Boolean(isDistritosLoading.value || !form.value.idProvincia);
+  });
+
+  const isSubmitDisabled = computed((): boolean => {
+    return Boolean(isSaving.value || isLoading.value);
+  });
+
+  // --- Watchers para selects en cascada ---
+  watch(() => form.value.idDepartamento, (newId, oldId) => {
+    if (newId !== oldId) {
+      form.value.idProvincia = null;
+      form.value.idDistrito = null;
+      fetchProvincias(newId);
+    }
+  });
+  watch(() => form.value.idProvincia, (newId, oldId) => {
+    if (newId !== oldId) {
+      form.value.idDistrito = null;
+      fetchDistritos(newId);
+    }
+  });
+
+  // --- Lógica del Ciclo de Vida del Modal ---
   onMounted(async () => {
+    // Inicialización del modal (sin cambios)
     if (modalElement.value) {
       modalInstance = new BootstrapModal(modalElement.value, { backdrop: 'static', keyboard: false });
       modalInstance.show();
       modalElement.value.addEventListener('hidden.bs.modal', () => emit('close'));
     }
 
+    // Siempre se cargan los departamentos primero
     await fetchDepartamentos();
 
+    // Lógica para el modo EDICIÓN
     if (isEditMode.value) {
+      isLoading.value = true; // Inicia la carga
+
       try {
+        // 1. Obtener los datos del trabajador desde la API
         const response = await fetch(`/api/trabajadores/${props.trabajadorId}`);
         if (!response.ok) throw new Error('No se pudo cargar la información del trabajador.');
-
         const data = await response.json();
-        if (data.idDepartamento) await fetchProvincias(data.idDepartamento);
-        if (data.idProvincia) await fetchDistritos(data.idProvincia);
 
-        form.value = data;
+        // 2. Asignar los campos simples al formulario
+        form.value.id = data.id;
+        form.value.tipoDocumento = data.tipoDocumento;
+        form.value.numeroDocumento = data.numeroDocumento;
+        form.value.nombres = data.nombres;
+        form.value.sexo = data.sexo;
 
+        // 3. Carga y asignación en cascada para la ubicación
+        if (data.idDepartamento) {
+          // Asigna el ID del departamento y ESPERA a que se carguen las provincias
+          form.value.idDepartamento = data.idDepartamento;
+          await fetchProvincias(data.idDepartamento);
+
+          // Una vez cargadas las provincias, ahora sí asigna el ID de la provincia
+          if (data.idProvincia) {
+            form.value.idProvincia = data.idProvincia;
+            await fetchDistritos(data.idProvincia);
+
+            // Finalmente, una vez cargados los distritos, asigna el ID del distrito
+            if (data.idDistrito) {
+              form.value.idDistrito = data.idDistrito;
+            }
+          }
+        }
       } catch (e: any) {
         errorApi.value = e.message;
+      } finally {
+        isLoading.value = false; // Finaliza la carga
       }
+    } else {
+      // Modo CREAR, solo terminamos la carga
+      isLoading.value = false;
     }
-
-    isLoading.value = false;
   });
 
-  // Lógica de Envío
+
+  // --- Lógica de Envío ---
   const handleSubmit = async () => {
     isSaving.value = true;
     errorApi.value = null;
-    validationErrors.value = {};
-
-    let isValid = true;
-    if (!form.value.nombres) { validationErrors.value.Nombres = ['El nombre es obligatorio.']; isValid = false; }
-    if (!form.value.numeroDocumento) { validationErrors.value.NumeroDocumento = ['El número de documento es obligatorio.']; isValid = false; }
-    if (!form.value.sexo) { validationErrors.value.Sexo = ['Debe seleccionar un sexo.']; isValid = false; }
-    if (!form.value.idDepartamento) { validationErrors.value.IdDepartamento = ['Debe seleccionar un departamento.']; isValid = false; }
-    if (!form.value.idProvincia) { validationErrors.value.IdProvincia = ['Debe seleccionar una provincia.']; isValid = false; }
-    if (!form.value.idDistrito) { validationErrors.value.IdDistrito = ['Debe seleccionar un distrito.']; isValid = false; }
-    if (!isValid) { errorApi.value = "Por favor, corrija los errores indicados."; isSaving.value = false; return; }
+    validationErrors.value = {}; // Limpia errores anteriores
 
     const url = isEditMode.value ? `/api/trabajadores/${props.trabajadorId}` : '/api/trabajadores';
     const method = isEditMode.value ? 'PUT' : 'POST';
@@ -94,34 +165,44 @@
         body: JSON.stringify(form.value)
       });
 
+      // Si la respuesta NO es OK, la procesamos como un error
       if (!response.ok) {
+        // Intentamos leer el cuerpo de la respuesta como JSON
         const errorData = await response.json();
-        if (response.status === 400 && errorData.errors) {
-          validationErrors.value = errorData.errors;
-          errorApi.value = "Por favor, corrija los errores en el formulario.";
-        } else if (errorData.message) {
-          errorApi.value = errorData.message;
+
+        if (response.status === 400) {
+          // Si es un error de validación de modelo (varios campos)
+          if (errorData.errors) {
+            validationErrors.value = errorData.errors;
+            errorApi.value = "Por favor, corrija los errores en el formulario.";
+          }
+          // Si es nuestro error personalizado de lógica de negocio (DNI duplicado)
+          else if (errorData.message) {
+            errorApi.value = errorData.message;
+          }
+          // Otro tipo de error 400
+          else {
+            errorApi.value = "Hubo un problema con los datos enviados.";
+          }
         } else {
-          errorApi.value = "Hubo un problema con los datos enviados.";
+          // Errores 500, 404, etc.
+          throw new Error(errorData.message || `Error del servidor: ${response.status}`);
         }
         return;
       }
 
+      // Si todo fue OK
       emit('saved');
       modalInstance?.hide();
 
     } catch (e: any) {
+      // Este catch ahora es principalmente para errores de red o JSON mal formado
       errorApi.value = "No se pudo comunicar con el servidor o la respuesta no es válida.";
       console.error(e);
     } finally {
       isSaving.value = false;
     }
   };
-
-  const isProvinciaDisabled = computed(() => isProvinciasLoading.value || !form.value.idDepartamento);
-  const isDistritoDisabled = computed(() => isDistritosLoading.value || !form.value.idProvincia);
-  const isSubmitDisabled = computed(() => isSaving.value || isLoading.value);
-
 </script>
 
 <template>
@@ -198,6 +279,7 @@
                 <label for="provincia" class="form-label">Provincia</label>
                 <select id="provincia" v-model="form.idProvincia"
                         :class="['form-select', { 'is-invalid': validationErrors.IdProvincia }]"
+
                         :disabled="isProvinciaDisabled">
                   <option v-if="isProvinciasLoading" :value="null">Cargando...</option>
                   <option v-else :value="null">-- Seleccione --</option>
@@ -227,7 +309,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" @click="modalInstance?.hide()">Cancelar</button>
           <button type="submit" form="trabajadorForm"
-                  class="btn btn-primary"
+                  :class="['btn', 'btn-primary']"
                   :disabled="isSubmitDisabled">
             <span v-if="isSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
             {{ isSaving ? 'Guardando...' : 'Guardar Cambios' }}
