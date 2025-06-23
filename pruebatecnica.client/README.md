@@ -1,39 +1,23 @@
-# pruebatecnica.client
+# Frontend - Gestión de Trabajadores
 
-This template should help get you started developing with Vue 3 in Vite.
+Esta es la aplicación de cliente (SPA) para la gestión de trabajadores, construida con Vue 3.
 
-## Recommended IDE Setup
+## Tecnologías y Prácticas
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+-   **Vue 3:** Utiliza la **Composition API** y la sintaxis `<script setup>`.
+-   **TypeScript:** Para un código fuertemente tipado y mantenible.
+-   **Vite:** Como servidor de desarrollo y herramienta de construcción.
+-   **Bootstrap 5:** Para el sistema de diseño y componentes de UI.
 
-## Type Support for `.vue` Imports in TS
+## Estructura de Componentes
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+-   **`TrabajadorList.vue`**: Componente principal que muestra la tabla de trabajadores y orquesta la apertura de los modales.
+-   **`TrabajadorFormModal.vue`**: Modal reutilizable para la creación y edición de trabajadores. Contiene la lógica del formulario y la validación.
+-   **`ConfirmacionModal.vue`**: Modal genérico para confirmar acciones críticas como la eliminación.
 
-## Customize configuration
+## Scripts de Desarrollo
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+-   `npm install`: Instala las dependencias.
+-   `npm run dev`: Inicia el servidor de desarrollo de Vite.
 
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+*(Nota: Para un funcionamiento completo, esta aplicación requiere que el backend esté en ejecución, ya que consume su API. Se recomienda ejecutar la solución completa desde Visual Studio).*
