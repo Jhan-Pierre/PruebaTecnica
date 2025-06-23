@@ -10,5 +10,6 @@ namespace PruebaTecnica.Server.Interfaces.Repositories
         Task<int> CreateAsync(Trabajador trabajador);
         Task UpdateAsync(Trabajador trabajador);
         Task DeleteAsync(int id);
+        Task<Trabajador?> FindByDocumentoAsync(string tipoDocumento, string numeroDocumento);
     }
 }

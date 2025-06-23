@@ -49,9 +49,9 @@ namespace PruebaTecnica.Server.Repositories
                 new SqlParameter("@NumeroDocumento", trabajador.NumeroDocumento),
                 new SqlParameter("@Nombres", trabajador.Nombres),
                 new SqlParameter("@Sexo", trabajador.Sexo),
-                new SqlParameter("@IdDepartamento", (object)trabajador.IdDepartamento ?? DBNull.Value),
-                new SqlParameter("@IdProvincia", (object)trabajador.IdProvincia ?? DBNull.Value),
-                new SqlParameter("@IdDistrito", (object)trabajador.IdDistrito ?? DBNull.Value),
+                new SqlParameter("@IdDepartamento", trabajador.IdDepartamento as object ?? DBNull.Value),
+                new SqlParameter("@IdProvincia", trabajador.IdProvincia as object ?? DBNull.Value),
+                new SqlParameter("@IdDistrito", trabajador.IdDistrito as object ?? DBNull.Value),
                 nuevoIdParam
             );
 
@@ -67,9 +67,9 @@ namespace PruebaTecnica.Server.Repositories
                 new SqlParameter("@NumeroDocumento", trabajador.NumeroDocumento),
                 new SqlParameter("@Nombres", trabajador.Nombres),
                 new SqlParameter("@Sexo", trabajador.Sexo),
-                new SqlParameter("@IdDepartamento", (object)trabajador.IdDepartamento ?? DBNull.Value),
-                new SqlParameter("@IdProvincia", (object)trabajador.IdProvincia ?? DBNull.Value),
-                new SqlParameter("@IdDistrito", (object)trabajador.IdDistrito ?? DBNull.Value)
+                new SqlParameter("@IdDepartamento", trabajador.IdDepartamento as object ?? DBNull.Value),
+                new SqlParameter("@IdProvincia", trabajador.IdProvincia as object ?? DBNull.Value),
+                new SqlParameter("@IdDistrito", trabajador.IdDistrito as object ?? DBNull.Value)
             };
 
             await _context.Database.ExecuteSqlRawAsync("EXEC sp_ActualizarTrabajador @Id, @TipoDocumento, @NumeroDocumento, @Nombres, @Sexo, @IdDepartamento, @IdProvincia, @IdDistrito", parameters);
@@ -79,6 +79,12 @@ namespace PruebaTecnica.Server.Repositories
         {
             var idParam = new SqlParameter("@Id", id);
             await _context.Database.ExecuteSqlRawAsync("EXEC sp_EliminarTrabajador @Id", idParam);
+        }
+
+        public async Task<Trabajador?> FindByDocumentoAsync(string tipoDocumento, string numeroDocumento)
+        {
+            return await _context.Trabajadores
+                .FirstOrDefaultAsync(t => t.TipoDocumento == tipoDocumento && t.NumeroDocumento == numeroDocumento);
         }
     }
 }
